@@ -1,0 +1,4 @@
+interface:
+  display_name: "PaperPulse"
+  short_description: "Turn local AI papers into illustrated Chinese briefs"
+  default_prompt: "Use $paperpulse-skill to turn this local AI paper PDF into a screenshot-backed Chinese brief and shareable HTML report."

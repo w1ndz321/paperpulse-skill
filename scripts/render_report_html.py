@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+from __future__ import annotations
+
 import argparse
 from datetime import datetime
 import html
@@ -241,7 +243,9 @@ def simple_template_render(template_text: str, values: dict[str, str]) -> str:
 
 
 def render_template_page(title: str, content: str, template_name: str) -> str | None:
-    template_path = TEMPLATES_DIR / template_name
+    template_path = (TEMPLATES_DIR / template_name).resolve()
+    if template_path != TEMPLATES_DIR and TEMPLATES_DIR not in template_path.parents:
+        raise ValueError(f"Template must be inside {TEMPLATES_DIR}")
     if not template_path.exists():
         return None
 
@@ -458,8 +462,14 @@ def main() -> int:
     report_path = Path(args.report_md).expanduser().resolve()
     output_path = Path(args.output_html).expanduser().resolve()
 
+    if not report_path.is_file():
+        parser.error(f"Report not found: {report_path}")
+
     markdown_text = report_path.read_text(encoding="utf-8")
-    html_text = render_html(markdown_text, args.template, not args.no_template)
+    try:
+        html_text = render_html(markdown_text, args.template, not args.no_template)
+    except ValueError as exc:
+        parser.error(str(exc))
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(html_text, encoding="utf-8")
     print(f"wrote={output_path}")

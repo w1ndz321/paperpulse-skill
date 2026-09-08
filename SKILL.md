@@ -1,109 +1,61 @@
 ---
 name: paperpulse-skill
-description: Read local CS/AI/LLM academic PDFs, crop important PDF screenshots, and produce a Chinese paper brief as `report.md`, `images/`, and GitHub Pages-ready `report.html`.
+description: Turn one local CS, AI, or LLM paper PDF into a Chinese, screenshot-backed research brief and a shareable HTML page. Use when readers need the paper's argument, original figures or tables, evidence, and a grounded critique—not for generic PDF extraction or literature searches.
 ---
 
-# PaperPulse Skill
+# PaperPulse
 
-Turn one local CS / AI / LLM paper PDF into a shareable Chinese paper brief:
-
-```text
-PDF -> source_text.md + images/ + captions.json -> report.md -> report.html
-```
-
-Final folder, created under this skill's `outputs/` directory by default:
+Turn one local paper PDF into:
 
 ```text
-outputs/<paper-slug>/
-├── report.md
-├── report.html
-└── images/
-```
-
-`<paper-slug>` must come from keywords in the paper title, not from opaque PDF filenames such as `2510.04618v3.pdf`. `pdf_process.py` does this by default. Use `--slug` only to override with a clearer title-keyword folder name.
-
-Use relative image paths like `images/main_results.png` so the folder works locally and on GitHub Pages.
-
-## Fast Path
-
-If `report.md` already exists and all referenced `images/...` files exist, do not re-read the PDF or re-crop screenshots. Run only:
-
-```bash
-python scripts/render_report_html.py "<output-dir>/report.md" "<output-dir>/report.html"
-```
-
-HTML rendering should be seconds or less. Multi-minute runtime belongs to PDF extraction, screenshot selection/cropping, or report writing.
-
-## Workflow
-
-1. Prepare the paper assets in one script:
-
-```bash
-python scripts/pdf_process.py "<pdf-path>"
-```
-
-This creates:
-
-```text
-outputs/<paper-slug>/
+outputs/<title-keyword-slug>/
 ├── source_text.md
 ├── captions.json
-└── images/
+├── images/
+├── report.md
+└── report.html
 ```
 
-`pdf_process.py` directly uses `pymupdf4llm.to_markdown()`, removes `References` / `Bibliography` / `参考文献` and everything after it, detects arXiv / code links from PDF annotations and first-page text, extracts正文中的 Figure/Table screenshots into `images/`, and writes their captions/nearby text to `captions.json`. If extraction fails, report the dependency/error; do not use OCR or fallback extraction.
+Resolve `<skill-dir>` as the directory containing this `SKILL.md`; do not assume the current working directory is the skill directory. Generated output defaults to `./outputs` in the current working directory. Use relative report image paths such as `images/main_results.png` so the folder remains portable.
 
-Do not search the internet to fill missing paper/code links. If `captions.json` does not contain a paper or code/project link, write `未在 PDF 中提取到` in `report.md` and continue.
+## Choose the path
 
-Use `--output-root <dir>` only when the user explicitly wants to put all output folders somewhere else. The default is the skill-local `outputs/` folder because it is writable in Codex.
+- If `report.md` exists and every referenced image exists, skip PDF extraction and screenshot cropping. Render and validate only.
+- Otherwise, run the complete workflow below.
+- Reuse valid `source_text.md`, `captions.json`, and screenshots when only the writing needs revision.
 
-If the generated folder name still looks like an arXiv id or a meaningless filename, rerun with a title-keyword slug, for example:
+## Complete workflow
+
+1. Extract text, links, captions, and candidate screenshots:
 
 ```bash
-python scripts/pdf_process.py "<pdf-path>" --slug ace-agentic-context-engineering
+python "<skill-dir>/scripts/pdf_process.py" "<pdf-path>"
 ```
 
-2. Read `source_text.md` and `captions.json`. Do not read every image visually. Use the paper body plus each figure/table caption and nearby text to decide which images belong in the brief. Select by article logic, not by fixed keywords. Image count should follow paper length and evidence density:
+Pass `--output-root <dir>` when the user specifies another destination. The script derives the folder slug from the paper title; use `--slug <title-keywords>` only when the derived name is unclear.
 
-- short papers: usually 3 to 5 evidence images
-- regular papers: usually 4 to 7 evidence images
-- long papers, surveys, benchmark papers, or system papers: usually 7 to 12 evidence images, and more if every image carries a distinct argument
+If a required PDF dependency is missing, report the provided installation command and stop before changing the environment. If extraction fails, surface the actual error; do not silently switch to OCR or another extractor.
 
-- choose problem/task/motivation figures when they shape the story
-- choose method/framework/pipeline/algorithm/objective figures when they explain the contribution
-- choose main result tables or benchmark figures when they prove the claim
-- choose ablation, scaling, cost, latency, case-study, error, safety, or limitation figures only when they change the interpretation
+2. Read `source_text.md` and `captions.json`. Use the paper body, captions, and nearby text to choose evidence. At this point, read [references/image-selection.md](references/image-selection.md). Visually inspect only the screenshots selected for the final report, and re-crop any incomplete figure or table before drafting.
 
-Screenshot quality is a hard requirement:
+3. Read [references/reportstyle.md](references/reportstyle.md), then write `report.md` in Chinese. Keep claims tied to the extracted paper. Do not browse for missing paper or code links unless the user asks; write `未在 PDF 中提取到` when a link is absent.
 
-- Every report screenshot must include the complete figure/table body.
-- Preserve in-figure legends, color keys, axis labels, table headers, notes, and the paper's original Figure/Table caption.
-- Do not crop so tightly that a title, legend, footnote, or caption is cut off. Prefer a slightly larger crop over a cleaner but incomplete crop.
-- Visually inspect only the images selected for the final report. If any image is incomplete, re-crop it before writing or rendering the report.
-- When the original caption is too long, keep the full original caption in the screenshot and use a shorter Chinese alt/caption in Markdown.
-
-If a selected screenshot is incomplete, manually re-crop or re-run PDF processing before writing or rendering the report. Use only final `images/...` paths in `report.md`.
-
-3. Write `report.md` in Chinese following `references/reportstyle.md`. Load that file before drafting the report.
-
-4. Render HTML:
+4. Render and validate:
 
 ```bash
-python scripts/render_report_html.py "<output-dir>/report.md" "<output-dir>/report.html"
+python "<skill-dir>/scripts/render_report_html.py" "<output-dir>/report.md" "<output-dir>/report.html"
+python "<skill-dir>/scripts/validate_report.py" "<output-dir>/report.md" --html "<output-dir>/report.html"
 ```
 
-After rendering, check the HTML hero information cards:
+5. Open the rendered HTML and check the main reading flow on desktop and a narrow/mobile viewport. Confirm:
 
-- `PAPER` should contain arXiv / DOI / paper links only.
-- `CODE` should contain GitHub / GitLab / Hugging Face / project/demo links only.
-- `AUTHORS` should contain authors, institutions, or author team text only; it must not contain URLs or keywords.
-- `KEYWORDS` should contain about 5 keywords only; it must not contain author names or links.
+- the hero title and TL;DR are populated;
+- `PAPER`, `CODE`, `AUTHORS`, and `KEYWORDS` contain only their intended data;
+- every selected image loads, remains legible, and sits next to the claim it supports;
+- headings, lists, links, and long metadata do not break the layout.
 
-If a card is missing expected content or contains the wrong kind of text, fix the metadata near the top of `report.md` and rerender. The template also has automatic cleanup, but the source Markdown should still be correct.
+Fix `report.md` first and rerender. Edit the template only when the defect is genuinely presentational.
 
-Keep `source_text.md` and `captions.json` because they explain how the report was built. In the final response, state output paths and whether selected screenshots were visually inspected.
+## Completion contract
 
-## Scripts
-
-- `scripts/pdf_process.py`: prepare `source_text.md`, `images/`, and `captions.json`.
-- `scripts/render_report_html.py`: render `report.md` into PaperPulse-style `report.html`.
+Keep `source_text.md` and `captions.json` for traceability. In the final response, link `report.md` and `report.html`, state the output directory, and say whether the selected screenshots and rendered page were visually inspected. Never claim a check that was not performed.

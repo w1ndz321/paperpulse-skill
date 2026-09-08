@@ -7,12 +7,23 @@ import json
 import re
 from pathlib import Path
 
-try:
-    import fitz  # type: ignore
-except ImportError:  # pragma: no cover
-    import pymupdf as fitz  # type: ignore
+fitz = None
+pymupdf4llm = None
 
-import pymupdf4llm  # type: ignore
+try:  # Keep --help and pure helpers usable before optional dependencies are installed.
+    try:
+        import fitz as _fitz  # type: ignore
+    except ImportError:  # pragma: no cover
+        import pymupdf as _fitz  # type: ignore
+    fitz = _fitz
+except ImportError:  # pragma: no cover
+    pass
+
+try:
+    import pymupdf4llm as _pymupdf4llm  # type: ignore
+    pymupdf4llm = _pymupdf4llm
+except ImportError:  # pragma: no cover
+    pass
 
 
 CAPTION_RE = re.compile(
@@ -52,6 +63,20 @@ def slugify(text: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-") or "paper-report"
 
 
+def require_pdf_dependencies() -> None:
+    missing = []
+    if fitz is None:
+        missing.append("pymupdf")
+    if pymupdf4llm is None:
+        missing.append("pymupdf4llm")
+    if missing:
+        packages = " ".join(missing)
+        raise RuntimeError(
+            f"Missing PDF dependencies: {', '.join(missing)}. "
+            f"Install them with: python -m pip install {packages}"
+        )
+
+
 def clean_markdown_line(line: str) -> str:
     line = re.sub(r"^#{1,6}\s*", "", line).strip()
     line = re.sub(r"^\s*[-–—]\s*", "", line)
@@ -83,6 +108,8 @@ def paper_title_from_markdown(text: str) -> str:
 
 def title_keyword_slug(title: str) -> str:
     title = re.sub(r"\s+", " ", title.replace("CON TEXTS", "CONTEXTS")).strip()
+    if not title:
+        return ""
     parts = re.split(r"\s*[:：]\s*", title, maxsplit=1)
 
     def keywords(value: str) -> list[str]:
@@ -97,8 +124,18 @@ def title_keyword_slug(title: str) -> str:
     return slugify("-".join(selected[:5]) or title)
 
 
+def choose_output_slug(override: str | None, paper_title: str, pdf_stem: str) -> str:
+    if override:
+        return slugify(override)
+    return title_keyword_slug(paper_title) or slugify(pdf_stem)
+
+
 def compact(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
+
+
+def rect_area(rect: fitz.Rect) -> float:
+    return max(rect.width, 0.0) * max(rect.height, 0.0)
 
 
 def intersect(a: fitz.Rect, b: fitz.Rect) -> fitz.Rect:
@@ -290,7 +327,7 @@ def visual_crop(page: fitz.Page, caption: fitz.Rect, kind: str) -> fitz.Rect | N
         changed = False
         area = expand(crop, 28, 55)
         for rect in candidates:
-            if intersect(area, rect).get_area() > 0:
+            if rect_area(intersect(area, rect)) > 0:
                 merged = union([crop, rect])
                 if merged != crop:
                     crop = merged
@@ -298,7 +335,7 @@ def visual_crop(page: fitz.Page, caption: fitz.Rect, kind: str) -> fitz.Rect | N
 
     content = expand(crop, 4, 4)
     for rect, _ in page_blocks(page):
-        if intersect(content, rect).get_area() / max(rect.get_area(), 1.0) >= 0.45:
+        if rect_area(intersect(content, rect)) / max(rect_area(rect), 1.0) >= 0.45:
             content = union([content, rect])
     return intersect(expand(union([content, caption]), 8, 8), page.rect)
 
@@ -336,9 +373,10 @@ def crop_for_caption(page: fitz.Page, caption: fitz.Rect, kind: str) -> fitz.Rec
 
 def clear_images(images_dir: Path) -> None:
     images_dir.mkdir(parents=True, exist_ok=True)
-    for path in images_dir.iterdir():
-        if path.is_file():
-            path.unlink()
+    for pattern in ("figure_*.png", "table_*.png"):
+        for path in images_dir.glob(pattern):
+            if path.is_file():
+                path.unlink()
 
 
 def process_pdf(
@@ -350,6 +388,7 @@ def process_pdf(
     stripped_references: bool | None = None,
     paper_title: str = "",
 ) -> dict:
+    require_pdf_dependencies()
     report_dir.mkdir(parents=True, exist_ok=True)
     images_dir = report_dir / "images"
     clear_images(images_dir)
@@ -361,39 +400,39 @@ def process_pdf(
         stripped = bool(stripped_references)
     (report_dir / "source_text.md").write_text(source, encoding="utf-8")
 
-    doc = fitz.open(str(pdf_path))
-    assets = []
-    for record in caption_records(doc, max_assets):
-        page = doc.load_page(record["page_index"])
-        image = f"images/{record['id']}.png"
-        pix = page.get_pixmap(
-            matrix=fitz.Matrix(scale, scale),
-            clip=crop_for_caption(page, record["caption_rect"], record["kind"]),
-            alpha=False,
-            colorspace=fitz.csRGB,
-        )
-        pix.save(str(report_dir / image))
-        assets.append(
-            {
-                "id": record["id"],
-                "kind": record["kind"],
-                "page": record["page"],
-                "image": image,
-                "caption": record["caption"],
-                "nearby_text": nearby_text(page, record["caption_rect"]),
-            }
-        )
+    with fitz.open(str(pdf_path)) as doc:
+        assets = []
+        for record in caption_records(doc, max_assets):
+            page = doc.load_page(record["page_index"])
+            image = f"images/{record['id']}.png"
+            pix = page.get_pixmap(
+                matrix=fitz.Matrix(scale, scale),
+                clip=crop_for_caption(page, record["caption_rect"], record["kind"]),
+                alpha=False,
+                colorspace=fitz.csRGB,
+            )
+            pix.save(str(report_dir / image))
+            assets.append(
+                {
+                    "id": record["id"],
+                    "kind": record["kind"],
+                    "page": record["page"],
+                    "image": image,
+                    "caption": record["caption"],
+                    "nearby_text": nearby_text(page, record["caption_rect"]),
+                }
+            )
 
-    metadata = {
-        "pdf": str(pdf_path),
-        "title": paper_title,
-        "slug": report_dir.name,
-        "source": "source_text.md",
-        "images_dir": "images",
-        "stripped_references": stripped,
-        "links": document_links(doc),
-        "assets": assets,
-    }
+        metadata = {
+            "pdf": str(pdf_path),
+            "title": paper_title,
+            "slug": report_dir.name,
+            "source": "source_text.md",
+            "images_dir": "images",
+            "stripped_references": stripped,
+            "links": document_links(doc),
+            "assets": assets,
+        }
     (report_dir / "captions.json").write_text(json.dumps(metadata, ensure_ascii=False, indent=2), encoding="utf-8")
     stale_captions_md = report_dir / "captions.md"
     if stale_captions_md.exists():
@@ -404,26 +443,50 @@ def process_pdf(
 def main() -> int:
     parser = argparse.ArgumentParser(description="Extract paper Markdown, figure/table screenshots, and captions.")
     parser.add_argument("pdf_path")
-    parser.add_argument("--output-root", help="Root directory for the paper output folder. Defaults to ./outputs inside this skill.")
+    parser.add_argument(
+        "--output-root",
+        help="Root directory for the paper output folder. Defaults to ./outputs in the current working directory.",
+    )
     parser.add_argument("--slug")
     parser.add_argument("--max-assets", type=int, default=30)
     parser.add_argument("--scale", type=float, default=4)
     args = parser.parse_args()
 
     pdf_path = Path(args.pdf_path).expanduser().resolve()
-    output_root = Path(args.output_root).expanduser().resolve() if args.output_root else Path(__file__).resolve().parent.parent / "outputs"
-    source, stripped = strip_references(markdown_from_pdf(pdf_path))
-    paper_title = paper_title_from_markdown(source)
-    report_dir = output_root / (args.slug or title_keyword_slug(paper_title) or slugify(pdf_path.stem))
-    metadata = process_pdf(
-        pdf_path,
-        report_dir,
-        args.max_assets,
-        args.scale,
-        source_text=source,
-        stripped_references=stripped,
-        paper_title=paper_title,
+    if not pdf_path.is_file():
+        parser.error(f"PDF not found: {pdf_path}")
+    if args.max_assets < 1:
+        parser.error("--max-assets must be at least 1")
+    if args.scale <= 0:
+        parser.error("--scale must be greater than 0")
+    try:
+        require_pdf_dependencies()
+    except RuntimeError as exc:
+        parser.error(str(exc))
+
+    output_root = (
+        Path(args.output_root).expanduser().resolve()
+        if args.output_root
+        else Path.cwd() / "outputs"
     )
+    try:
+        source, stripped = strip_references(markdown_from_pdf(pdf_path))
+    except Exception as exc:
+        parser.error(f"Could not extract Markdown from {pdf_path.name}: {exc}")
+    paper_title = paper_title_from_markdown(source)
+    report_dir = output_root / choose_output_slug(args.slug, paper_title, pdf_path.stem)
+    try:
+        metadata = process_pdf(
+            pdf_path,
+            report_dir,
+            args.max_assets,
+            args.scale,
+            source_text=source,
+            stripped_references=stripped,
+            paper_title=paper_title,
+        )
+    except Exception as exc:
+        parser.error(f"Could not process {pdf_path.name}: {exc}")
 
     print(f"report_dir={report_dir}")
     print(f"source={report_dir / metadata['source']}")

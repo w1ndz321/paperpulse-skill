@@ -1,4 +1,0 @@
-interface:
-  display_name: "PaperPulse Skill"
-  short_description: "Read CS/AI/LLM PDFs and produce a screenshot-backed Chinese paper brief with report.md, images, and report.html."
-  default_prompt: "Use $paperpulse-skill to read this local CS/AI/LLM paper PDF. First run scripts/pdf_process.py to extract body Markdown with pymupdf4llm, remove references, save figure/table screenshots into images/, and write captions.json/captions.md. Then read only source_text.md plus captions to decide which images belong in the brief. Write a Chinese, lively, human, opinionated paper brief with an engaging faithful title, a ~150-character TL;DR, flexible article-specific headings, metadata, concrete results, a dedicated commentary section, grounded research directions/reflections, report.md, selected relative image links, and a GitHub Pages-ready report.html."

@@ -4,7 +4,7 @@
 
 直接用 AI 工具读，效果常常令人失望：分了十几个 section 的大段文字总结🤯、堆砌专业术语的机械复述🥱，而且往往无法直接看到图表📈，导致输出的数值型结果不可靠。
 
-✨ **PaperPulse** 依附于 Codex Skills。🤖它能把你感兴趣的论文，像**微信公众号**的论文分享稿形式呈现：有解读、有观点，并且能**自动截出文中关键方法框架图、实验结果图**，文末附上 AI 对这篇论文的思考与判断。最终结果以 **HTML**保存，可以方便的分享给所有人。
+✨ **PaperPulse** 是一个 Codex Skill。🤖 它能把你感兴趣的论文整理成接近**微信公众号**的图文解读：有主线、有判断，并且能**自动截出文中关键方法框架图和实验结果图**。最终结果保存为可直接阅读和分享的 **HTML**。
 
 ---
 
@@ -37,16 +37,20 @@
 
 ## 🚀 Quick Start
 
-**1. 安装依赖**
+**1. 安装依赖（Python 3.9+）**
 
 ```bash
-pip install pymupdf pymupdf4llm
-pip install markdown jinja2   # 可选
+python -m pip install pymupdf pymupdf4llm
+python -m pip install markdown jinja2   # 可选；用于完整 Markdown 渲染
 ```
 
 **2. 安装 Skill**
 
 让 Codex 安装：
+
+```text
+请从 https://github.com/w1ndz321/paperpulse-skill 安装 paperpulse-skill
+```
 
 或手动克隆：
 
@@ -60,6 +64,14 @@ git clone https://github.com/w1ndz321/paperpulse-skill ~/.codex/skills/paperpuls
 阅读这篇文章 /path/to/paper.pdf
 # 或
 使用 paperpulse-skill 阅读这篇文章 /path/to/paper.pdf
+```
+
+默认结果写入当前工作目录的 `outputs/<论文标题关键词>/`，包含原文提取、候选图表、Markdown 解读和 HTML 页面。生成后可运行：
+
+```bash
+python ~/.codex/skills/paperpulse-skill/scripts/validate_report.py \
+  outputs/<论文标题关键词>/report.md \
+  --html outputs/<论文标题关键词>/report.html
 ```
 
 ---
@@ -77,7 +89,7 @@ git clone https://github.com/w1ndz321/paperpulse-skill ~/.codex/skills/paperpuls
 **PaperPulse 的定位**
 
 - 🚀  **安装方便**：接入 Codex 即用，无需启动任何额外服务
-- 🔍  **截图取证**：直接从 PDF 裁出方法框架图、实验表格，所见即原文，无幻觉风险
+- 🔍  **截图取证**：直接从 PDF 裁出方法框架图、实验表格，便于核验结论并降低幻觉风险
 - 💬  **有态度的文风**：效仿公众号精品文章，有观点、有判断，不是干巴巴的摘要
 - 📤  **即产即发**：精美 HTML 本地可读、可直接托管分享，促进学术传播
 
@@ -85,7 +97,7 @@ git clone https://github.com/w1ndz321/paperpulse-skill ~/.codex/skills/paperpuls
 
 纯脚本截图有一系列难以彻底避免的细节问题：链接识别错误、HTML 排版错乱、单双栏图片错位、表格识别不全、图表截歪……这些以前只能靠人工逐一修补。
 
-PaperPulse 让 Codex 扮演「人工审校」的角色，在生成过程中自动发现瑕疵并修正，最终成品经过完整检查，最大程度保障可分享的质量。Codex 的记忆功能还会在遇到报错时自动记录并修复 Skill，共性问题持续沉淀——越用越顺手。
+PaperPulse 让 Codex 扮演「人工审校」的角色：根据论文叙事选择证据图、检查裁剪完整性、核对元数据，并在渲染后验证链接和版式。脚本负责稳定的提取与渲染，Codex 负责需要判断的阅读与审校。
 
 实测数据：用不同排版、不同类型（新方法论文、综述）、不同体量的文章反复验证，处理单篇耗时从最初约 **15 分钟**降至现在平均 **5 分钟**。
 
