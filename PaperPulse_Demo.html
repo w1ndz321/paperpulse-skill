@@ -3,31 +3,31 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#07111f">
+  <meta name="theme-color" content="#f4f8fb">
   <title>PaperPulse · Product Film</title>
 
   <!--
     VIDEO DROP-IN
     1. 将真实操作录屏命名为 paperpulse-operation.mp4
     2. 把它放在本 HTML 同一目录；不需要修改其他代码
-    3. 推荐：1920×1080、H.264 MP4、20–45 秒、录屏本身不带黑边
-    4. 录制成片时可打开 PaperPulse_Demo.html?present=1，控制栏会自动隐藏
+    3. 推荐：H.264 MP4、20–45 秒、保留录屏原声、画面不带黑边
+    4. 录制成片时打开 PaperPulse_Demo.html?present=1#hero，再点击“开始演示”启用声音
 
     如需使用其他文件名，只修改页面中唯一的 <video src="...">。
   -->
 
   <style>
     :root {
-      --ink: #f2f7ff;
-      --muted: #90a4bc;
-      --faint: #52677f;
-      --blue: #52a8ff;
-      --blue-strong: #1688f8;
-      --blue-soft: rgba(82, 168, 255, 0.13);
-      --line: rgba(168, 201, 232, 0.16);
-      --surface: #0c1929;
-      --surface-2: #102238;
-      --paper: #f8fbff;
+      --ink: #102a43;
+      --muted: #526b82;
+      --faint: #7d91a3;
+      --blue: #1976c9;
+      --blue-strong: #0f67b1;
+      --blue-soft: rgba(25, 118, 201, 0.1);
+      --line: rgba(31, 72, 104, 0.14);
+      --surface: #f7fafc;
+      --surface-2: #edf4f8;
+      --paper: #fffefa;
       --paper-ink: #16324f;
       --stage-w: 1600;
       --stage-h: 900;
@@ -40,7 +40,7 @@
 
     body {
       overflow: hidden;
-      background: #030911;
+      background: #eaf2f7;
       color: var(--ink);
       font-family: Inter, "SF Pro Display", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
       -webkit-font-smoothing: antialiased;
@@ -52,9 +52,9 @@
       display: grid;
       place-items: center;
       background:
-        radial-gradient(circle at 18% 15%, rgba(22, 136, 248, .14), transparent 32%),
-        radial-gradient(circle at 82% 85%, rgba(82, 168, 255, .08), transparent 30%),
-        #030911;
+        radial-gradient(circle at 18% 15%, rgba(25, 118, 201, .1), transparent 32%),
+        radial-gradient(circle at 82% 85%, rgba(53, 185, 176, .08), transparent 30%),
+        #eaf2f7;
     }
 
     #stage {
@@ -66,15 +66,15 @@
       overflow: hidden;
       transform: translate(-50%, -50%) scale(var(--stage-scale, 1));
       transform-origin: center;
-      border: 1px solid rgba(255, 255, 255, .08);
+      border: 1px solid rgba(31, 72, 104, .12);
       border-radius: 22px;
       background:
-        linear-gradient(rgba(128, 176, 222, .04) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(128, 176, 222, .04) 1px, transparent 1px),
-        radial-gradient(circle at 78% 18%, rgba(22, 136, 248, .12), transparent 30%),
-        linear-gradient(145deg, #07111f 0%, #0a1727 54%, #07121f 100%);
+        linear-gradient(rgba(25, 118, 201, .035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(25, 118, 201, .035) 1px, transparent 1px),
+        radial-gradient(circle at 78% 18%, rgba(25, 118, 201, .09), transparent 30%),
+        linear-gradient(145deg, #fcfdfd 0%, #f4f8fb 54%, #edf5f9 100%);
       background-size: 40px 40px, 40px 40px, auto, auto;
-      box-shadow: 0 36px 120px rgba(0, 0, 0, .56);
+      box-shadow: 0 36px 100px rgba(31, 72, 104, .2);
     }
 
     #stage::after {
@@ -83,7 +83,7 @@
       inset: 0;
       z-index: 20;
       pointer-events: none;
-      box-shadow: inset 0 0 140px rgba(0, 0, 0, .25);
+      box-shadow: inset 0 0 120px rgba(38, 94, 136, .04);
     }
 
     body.present #stage { border-radius: 0; border-color: transparent; box-shadow: none; }
@@ -244,7 +244,7 @@
       color: var(--paper-ink);
       border-radius: 7px;
       background: var(--paper);
-      box-shadow: 0 32px 80px rgba(0, 0, 0, .42);
+      box-shadow: 0 32px 80px rgba(31, 72, 104, .2);
       transform: rotateY(-8deg) rotateZ(2deg);
     }
 
@@ -268,9 +268,9 @@
       right: 44px;
       bottom: 74px;
       height: 205px;
-      padding: 22px 24px;
+      padding: 16px;
       border: 2px solid var(--blue-strong);
-      background: #edf7ff;
+      background: #fff;
     }
 
     .paper-figure::after {
@@ -283,10 +283,14 @@
       font: 10px/1.4 Georgia, serif;
     }
 
-    .figure-flow { display: flex; align-items: center; justify-content: center; height: 100%; gap: 14px; }
-    .figure-flow b { display: grid; place-items: center; width: 95px; height: 62px; border-radius: 5px; background: #fff; border: 1px solid #a6cce9; font: 700 11px/1.2 system-ui; }
-    .figure-flow i { width: 30px; height: 2px; background: var(--blue-strong); position: relative; }
-    .figure-flow i::after { content: ""; position: absolute; right: -1px; top: -4px; border-left: 7px solid var(--blue-strong); border-top: 5px solid transparent; border-bottom: 5px solid transparent; }
+    .paper-figure img,
+    .real-result-image,
+    .real-report-image {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
 
     .scan-line {
       position: absolute;
@@ -309,8 +313,8 @@
       border: 1px solid rgba(82, 168, 255, .45);
       border-radius: 9px;
       color: var(--blue);
-      background: rgba(7, 17, 31, .92);
-      box-shadow: 0 16px 50px rgba(0, 0, 0, .35);
+      background: rgba(255, 255, 255, .94);
+      box-shadow: 0 16px 40px rgba(31, 72, 104, .16);
       font: 650 13px/1.2 ui-monospace, monospace;
       letter-spacing: .08em;
     }
@@ -351,7 +355,7 @@
       gap: 19px;
       padding: 31px;
       background: #eef3f7;
-      box-shadow: 0 24px 50px rgba(0, 0, 0, .25);
+      box-shadow: 0 24px 50px rgba(31, 72, 104, .16);
       transform: rotate(-1.2deg);
     }
 
@@ -365,20 +369,15 @@
       padding: 34px 42px;
       color: var(--paper-ink);
       background: #fbfdff;
-      box-shadow: 0 24px 50px rgba(0, 0, 0, .25);
+      box-shadow: 0 24px 50px rgba(31, 72, 104, .16);
       transform: rotate(1deg);
     }
 
     .brief-preview .tiny { color: var(--blue-strong); font: 700 10px/1 ui-monospace, monospace; letter-spacing: .12em; }
     .brief-preview h3 { max-width: 480px; margin: 15px 0 16px; font-size: 30px; line-height: 1.24; letter-spacing: -.02em; }
     .brief-preview p { color: #64778c; font-size: 14px; line-height: 1.75; }
-    .result-figure { height: 190px; margin-top: 25px; padding: 22px; background: #edf7ff; border: 1px solid #c3dff3; }
-    .result-bars { display: flex; align-items: end; gap: 20px; height: 116px; padding: 0 20px; border-bottom: 1px solid #afc8db; }
-    .result-bars i { width: 48px; background: #b6d4ea; }
-    .result-bars i:nth-child(1) { height: 44%; }
-    .result-bars i:nth-child(2) { height: 61%; }
-    .result-bars i:nth-child(3) { height: 77%; background: var(--blue-strong); }
-    .result-bars i:nth-child(4) { height: 53%; }
+    .result-figure { height: 205px; margin-top: 22px; padding: 12px; background: #fff; border: 1px solid #c3dff3; }
+    .real-result-image { height: 155px; object-position: center top; }
     .result-caption { margin-top: 13px; color: #49657e; font-size: 11px; }
 
     .transform-arrow {
@@ -454,7 +453,7 @@
       border: 1px solid rgba(82, 168, 255, .28);
       border-radius: 16px;
       background: #02060b;
-      box-shadow: 0 30px 80px rgba(0, 0, 0, .48), inset 0 0 0 1px rgba(255, 255, 255, .025);
+      box-shadow: 0 30px 70px rgba(31, 72, 104, .2), inset 0 0 0 1px rgba(255, 255, 255, .025);
     }
 
     .video-frame::before {
@@ -467,7 +466,7 @@
       color: var(--blue);
       border: 1px solid rgba(82, 168, 255, .3);
       border-radius: 6px;
-      background: rgba(4, 12, 21, .78);
+      background: rgba(255, 255, 255, .9);
       font: 650 11px/1 ui-monospace, monospace;
       letter-spacing: .13em;
       backdrop-filter: blur(10px);
@@ -535,13 +534,13 @@
       border: 1px solid rgba(168, 201, 232, .2);
       border-radius: 12px;
       background: #f7fbff;
-      box-shadow: 0 28px 70px rgba(0, 0, 0, .38);
+      box-shadow: 0 28px 70px rgba(31, 72, 104, .18);
       transform: perspective(1200px) rotateY(3deg);
     }
 
-    .browser-bar { display: flex; align-items: center; gap: 8px; height: 42px; padding: 0 16px; background: #112338; }
-    .browser-bar i { width: 9px; height: 9px; border-radius: 50%; background: #3f5870; }
-    .browser-url { width: 380px; margin-left: 10px; padding: 7px 13px; border-radius: 5px; color: #7790a7; background: #081522; font: 10px/1 ui-monospace, monospace; }
+    .browser-bar { display: flex; align-items: center; gap: 8px; height: 42px; padding: 0 16px; background: #edf3f7; border-bottom: 1px solid #d9e5ed; }
+    .browser-bar i { width: 9px; height: 9px; border-radius: 50%; background: #b5c6d2; }
+    .browser-url { width: 380px; margin-left: 10px; padding: 7px 13px; border-radius: 5px; color: #6c8395; background: #fff; font: 10px/1 ui-monospace, monospace; }
 
     .report-mock { height: 468px; overflow: hidden; color: var(--paper-ink); background: #f7fbff; }
     .report-inner { width: 78%; margin: 0 auto; padding: 34px 0 80px; animation: reportScroll 9s ease-in-out infinite alternate; }
@@ -550,11 +549,7 @@
     .report-tldr { margin-top: 18px; padding: 16px 18px; border-left: 3px solid var(--blue-strong); background: #e9f5ff; color: #506b82; font-size: 12px; line-height: 1.7; }
     .report-section { margin-top: 26px; font-size: 18px; }
     .report-copy { margin-top: 10px; color: #667b8e; font: 12px/1.8 Georgia, serif; }
-    .report-image { height: 180px; margin-top: 17px; padding: 24px; border: 1px solid #c9dce9; background: #fff; }
-    .report-diagram { display: flex; align-items: center; justify-content: center; gap: 13px; height: 100%; }
-    .report-diagram b { display: grid; place-items: center; width: 112px; height: 60px; border-radius: 4px; border: 1px solid #aacce5; background: #edf7ff; font-size: 10px; }
-    .report-diagram i { width: 28px; height: 2px; background: var(--blue-strong); }
-
+    .report-image { height: 200px; margin-top: 17px; padding: 12px; border: 1px solid #c9dce9; background: #fff; }
     .output-copy h3 { margin: 0; font-size: 44px; line-height: 1.25; letter-spacing: -.03em; }
     .output-copy > p { margin: 20px 0 0; color: var(--muted); font-size: 20px; line-height: 1.65; }
     .file-list { margin-top: 42px; border-top: 1px solid var(--line); }
@@ -572,12 +567,17 @@
     .proof-foot b { color: var(--ink); font-size: 22px; margin-right: 8px; }
 
     /* Outro */
-    .outro-scene { display: grid; place-items: center; text-align: center; }
-    .outro-mark { margin: 0 auto 30px; transform: scale(1.4); }
-    .outro-scene .display { max-width: 1040px; margin-inline: auto; }
+    .outro-scene { display: grid; place-items: center; text-align: left; }
+    .outro-layout { position: relative; z-index: 2; width: 1240px; display: grid; grid-template-columns: 1fr 330px; gap: 110px; align-items: center; }
+    .outro-mark { margin: 0 0 30px; transform: scale(1.4); transform-origin: left center; }
+    .outro-scene .display { max-width: 900px; margin-inline: 0; font-size: 72px; }
     .outro-url { display: inline-flex; align-items: center; gap: 13px; margin-top: 44px; padding: 15px 22px; border: 1px solid rgba(82, 168, 255, .35); border-radius: 8px; color: var(--blue); background: rgba(82, 168, 255, .08); font: 600 18px/1 ui-monospace, monospace; }
     .outro-note { margin-top: 28px; color: var(--muted); font-size: 18px; }
-    .pulse-ring { position: absolute; width: 540px; height: 540px; border: 1px solid rgba(82, 168, 255, .12); border-radius: 50%; animation: ring 4s ease-out infinite; }
+    .qr-card { padding: 24px; border: 1px solid rgba(25, 118, 201, .2); border-radius: 22px; background: #fff; box-shadow: 0 28px 70px rgba(31, 72, 104, .16); }
+    .qr-card img { display: block; width: 280px; height: 280px; }
+    .qr-card strong { display: block; margin-top: 18px; color: var(--ink); font-size: 18px; }
+    .qr-card span { display: block; margin-top: 7px; color: var(--muted); font-size: 14px; line-height: 1.5; }
+    .pulse-ring { position: absolute; width: 540px; height: 540px; border: 1px solid rgba(25, 118, 201, .11); border-radius: 50%; animation: ring 4s ease-out infinite; }
     .pulse-ring.r2 { animation-delay: 1.35s; }
     .pulse-ring.r3 { animation-delay: 2.7s; }
 
@@ -602,10 +602,10 @@
       top: 18px;
       right: 20px;
       padding: 9px 12px;
-      border: 1px solid rgba(255, 255, 255, .1);
+      border: 1px solid rgba(31, 72, 104, .12);
       border-radius: 7px;
-      color: #7f94aa;
-      background: rgba(3, 9, 17, .78);
+      color: #6f8394;
+      background: rgba(255, 255, 255, .88);
       font: 12px/1 ui-monospace, monospace;
       backdrop-filter: blur(12px);
       transition: opacity .3s ease;
@@ -618,26 +618,47 @@
       bottom: 18px;
       width: min(940px, calc(100vw - 32px));
       padding: 11px 13px;
-      border: 1px solid rgba(255, 255, 255, .1);
+      border: 1px solid rgba(31, 72, 104, .12);
       border-radius: 12px;
-      background: rgba(3, 9, 17, .86);
-      box-shadow: 0 18px 50px rgba(0, 0, 0, .35);
+      background: rgba(255, 255, 255, .9);
+      box-shadow: 0 18px 50px rgba(31, 72, 104, .18);
       backdrop-filter: blur(18px);
       transform: translate(-50%, 0);
       transition: opacity .28s ease, transform .28s ease;
     }
 
     #hud.hidden { opacity: 0; pointer-events: none; transform: translate(-50%, 22px); }
-    #progress { height: 3px; overflow: hidden; border-radius: 3px; background: rgba(255, 255, 255, .12); }
+    #progress { height: 3px; overflow: hidden; border-radius: 3px; background: rgba(31, 72, 104, .12); }
     #progressFill { width: 0; height: 100%; background: var(--blue); box-shadow: 0 0 14px rgba(82, 168, 255, .6); }
     .controls { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
-    .control { min-width: 38px; height: 34px; padding: 0 11px; border: 1px solid rgba(255, 255, 255, .1); border-radius: 7px; color: #b7c8d9; background: rgba(255, 255, 255, .055); cursor: pointer; }
-    .control:hover { color: #fff; border-color: rgba(82, 168, 255, .4); background: rgba(82, 168, 255, .12); }
+    .control { min-width: 38px; height: 34px; padding: 0 11px; border: 1px solid rgba(31, 72, 104, .12); border-radius: 7px; color: #526b82; background: rgba(255, 255, 255, .7); cursor: pointer; }
+    .control:hover { color: var(--blue-strong); border-color: rgba(25, 118, 201, .35); background: rgba(25, 118, 201, .08); }
     .dots { display: flex; gap: 8px; margin-left: 12px; }
     .dot-btn { width: 8px; height: 8px; padding: 0; border: 0; border-radius: 50%; background: #3a4d60; cursor: pointer; transition: width .25s ease, border-radius .25s ease, background .25s ease; }
     .dot-btn.active { width: 28px; border-radius: 6px; background: var(--blue); }
     #sceneInfo { margin-left: auto; color: #6f8398; font: 12px/1 ui-monospace, monospace; }
     body.present #hud, body.present #tip { display: none; }
+
+    /* One click is required by browsers before audio can play. */
+    #startGate {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      color: var(--ink);
+      background: rgba(238, 245, 249, .9);
+      backdrop-filter: blur(18px);
+      transition: opacity .45s ease, visibility .45s step-start;
+    }
+    #startGate.hidden { opacity: 0; visibility: hidden; pointer-events: none; transition: opacity .45s ease, visibility .45s step-end; }
+    .start-brand { font-size: 22px; font-weight: 750; letter-spacing: .01em; }
+    .start-title { margin: 22px 0 30px; font-size: 52px; line-height: 1.15; letter-spacing: -.04em; }
+    .start-button { display: inline-flex; align-items: center; gap: 14px; padding: 17px 24px; border: 0; border-radius: 12px; color: #fff; background: var(--blue-strong); box-shadow: 0 18px 42px rgba(15, 103, 177, .22); font-size: 18px; font-weight: 700; cursor: pointer; }
+    .start-button:hover { transform: translateY(-2px); box-shadow: 0 22px 48px rgba(15, 103, 177, .28); }
+    .start-button small { opacity: .78; font-size: 13px; font-weight: 550; }
+    .start-note { margin-top: 18px; color: var(--muted); font-size: 14px; }
 
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
@@ -679,7 +700,7 @@
                 <div class="paper-col"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
               </div>
               <div class="paper-figure">
-                <div class="figure-flow"><b>Memory</b><i></i><b>Linking</b><i></i><b>Evolution</b></div>
+                <img src="demo-assets/a-mem-concept.png" alt="A-MEM 原文概念图">
               </div>
             </div>
             <div class="evidence-tag">ORIGINAL EVIDENCE FOUND</div>
@@ -710,8 +731,8 @@
               <h3>别再把 Agent 的记忆当数据库了</h3>
               <p>A-MEM 让记忆不只被存储和检索，还能主动建立联系、更新旧经验。</p>
               <div class="result-figure">
-                <div class="result-bars"><i></i><i></i><i></i><i></i></div>
-                <div class="result-caption">主实验结果 · 原文图表证据</div>
+                <img class="real-result-image" src="demo-assets/a-mem-k-sensitivity.png" alt="A-MEM 原文参数敏感性结果图">
+                <div class="result-caption">参数敏感性实验 · 原文图表证据</div>
               </div>
             </div>
           </div>
@@ -746,7 +767,7 @@
 
         <div class="video-frame" id="videoFrame" data-reveal="scale" style="--delay:.28s">
           <!-- 唯一的视频入口：把同目录录屏命名为 paperpulse-operation.mp4 即可 -->
-          <video id="operationVideo" src="paperpulse-operation.mp4" muted playsinline preload="metadata"></video>
+          <video id="operationVideo" src="paperpulse-operation.mp4" playsinline preload="metadata"></video>
 
           <div class="video-placeholder" id="videoPlaceholder">
             <div>
@@ -775,7 +796,7 @@
                 <div class="report-tldr">A-MEM 把交互记录写成带上下文、关键词和链接的笔记，再让新记忆反过来更新旧记忆。</div>
                 <h4 class="report-section">Agent 不是缺记性，是缺“会整理”的记忆</h4>
                 <p class="report-copy">论文不满足于把记忆做成更大的向量库，而是让记忆结构随着经验主动生长。</p>
-                <div class="report-image"><div class="report-diagram"><b>Interaction</b><i></i><b>Memory note</b><i></i><b>Evolution</b></div></div>
+                <div class="report-image"><img class="real-report-image" src="demo-assets/a-mem-architecture.png" alt="A-MEM 原文完整架构图"></div>
                 <h4 class="report-section">结果真正说明了什么</h4>
               </div>
             </div>
@@ -812,16 +833,34 @@
       <section class="scene outro-scene" data-id="outro" data-duration="8">
         <span class="pulse-ring" aria-hidden="true"></span><span class="pulse-ring r2" aria-hidden="true"></span><span class="pulse-ring r3" aria-hidden="true"></span>
         <span class="scene-no">07 / 07</span>
-        <div>
-          <div class="brand-mark outro-mark" data-reveal="scale" aria-hidden="true"></div>
-          <div class="kicker" data-reveal style="--delay:.18s;justify-content:center">PaperPulse</div>
-          <h2 class="display" data-reveal style="--delay:.34s">让 AI 读论文，<br>也把<em>证据</em>一起带回来。</h2>
-          <div class="outro-url" data-reveal style="--delay:.55s">github.com/w1ndz321/paperpulse-skill</div>
-          <p class="outro-note" data-reveal style="--delay:.7s">Open source · Codex Skill · Screenshot-backed paper briefs</p>
+        <div class="outro-layout">
+          <div class="outro-copy">
+            <div class="brand-mark outro-mark" data-reveal="scale" aria-hidden="true"></div>
+            <div class="kicker" data-reveal style="--delay:.18s">PaperPulse</div>
+            <h2 class="display" data-reveal style="--delay:.34s">把下一篇论文，<br>交给<em>PaperPulse</em>。</h2>
+            <div class="outro-url" data-reveal style="--delay:.55s">github.com/w1ndz321/paperpulse-skill</div>
+            <p class="outro-note" data-reveal style="--delay:.7s">开源 Codex Skill · 中文深度解读 · 原文图表证据</p>
+          </div>
+          <div class="qr-card" data-reveal="scale" style="--delay:.48s">
+            <img src="demo-assets/paperpulse-github-qr.png" alt="PaperPulse GitHub 仓库二维码">
+            <strong>扫码访问 GitHub</strong>
+            <span>查看安装方式、真实样例与完整工作流</span>
+          </div>
         </div>
       </section>
     </div>
   </main>
+
+  <div id="startGate">
+    <div>
+      <div class="start-brand">PaperPulse</div>
+      <h2 class="start-title">准备好，看看论文如何<br>变成可核验的研究简报。</h2>
+      <button class="start-button" id="startButton" type="button">
+        <span>▶&nbsp; 开始演示</span><small>包含原声 · 约 80 秒</small>
+      </button>
+      <div class="start-note">点击后将从当前所选场景开始，并启用录屏原声</div>
+    </div>
+  </div>
 
   <div id="tip">Space 播放/暂停 · ← → 切幕 · R 重播 · F 全屏 · H 控制栏</div>
 
@@ -856,10 +895,13 @@
       var sceneInfo = document.getElementById("sceneInfo");
       var hud = document.getElementById("hud");
       var tip = document.getElementById("tip");
+      var startGate = document.getElementById("startGate");
+      var startButton = document.getElementById("startButton");
       var params = new URLSearchParams(window.location.search);
 
       var index = 0;
-      var playing = true;
+      var playing = false;
+      var started = false;
       var elapsed = 0;
       var lastFrame = performance.now();
       var controlTimer = null;
@@ -930,9 +972,36 @@
         var promise = current.play();
         if (promise && promise.catch) {
           promise.catch(function () {
-            videoFrame.classList.remove("has-video");
+            playing = false;
+            updatePlayButton();
           });
         }
+      }
+
+      function startPresentation() {
+        if (started) return;
+        started = true;
+        playing = true;
+        elapsed = 0;
+        lastFrame = performance.now();
+        video.muted = false;
+        startGate.classList.add("hidden");
+        resetSceneAnimation(activeScene());
+
+        /* Prime the media element during the click so later playback keeps its audio. */
+        var startsOnVideo = activeScene().dataset.id === "operation";
+        video.volume = startsOnVideo ? 1 : 0;
+        var unlock = video.play();
+        if (!startsOnVideo && unlock && unlock.then) {
+          unlock.then(function () {
+            video.pause();
+            video.currentTime = 0;
+            video.volume = 1;
+          }).catch(function () { video.volume = 1; });
+        }
+
+        playCurrentVideo();
+        updatePlayButton();
       }
 
       function showScene(nextIndex) {
@@ -966,6 +1035,10 @@
       function replayScene() { showScene(index); }
 
       function togglePlayback() {
+        if (!started) {
+          startPresentation();
+          return;
+        }
         playing = !playing;
         var current = activeVideo();
         if (current) {
@@ -1015,7 +1088,7 @@
 
       function markVideoReady() {
         videoFrame.classList.add("has-video");
-        if (activeScene().dataset.id === "operation") playCurrentVideo();
+        if (started && activeScene().dataset.id === "operation") playCurrentVideo();
       }
 
       video.addEventListener("loadedmetadata", markVideoReady);
@@ -1030,6 +1103,7 @@
       nextButton.addEventListener("click", nextScene);
       replayButton.addEventListener("click", replayScene);
       playButton.addEventListener("click", togglePlayback);
+      startButton.addEventListener("click", startPresentation);
 
       document.addEventListener("keydown", function (event) {
         if (event.code === "Space") { event.preventDefault(); togglePlayback(); }
