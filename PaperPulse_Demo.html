@@ -1,0 +1,1066 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#07111f">
+  <title>PaperPulse · Product Film</title>
+
+  <!--
+    VIDEO DROP-IN
+    1. 将真实操作录屏命名为 paperpulse-operation.mp4
+    2. 把它放在本 HTML 同一目录；不需要修改其他代码
+    3. 推荐：1920×1080、H.264 MP4、20–45 秒、录屏本身不带黑边
+    4. 录制成片时可打开 PaperPulse_Demo.html?present=1，控制栏会自动隐藏
+
+    如需使用其他文件名，只修改页面中唯一的 <video src="...">。
+  -->
+
+  <style>
+    :root {
+      --ink: #f2f7ff;
+      --muted: #90a4bc;
+      --faint: #52677f;
+      --blue: #52a8ff;
+      --blue-strong: #1688f8;
+      --blue-soft: rgba(82, 168, 255, 0.13);
+      --line: rgba(168, 201, 232, 0.16);
+      --surface: #0c1929;
+      --surface-2: #102238;
+      --paper: #f8fbff;
+      --paper-ink: #16324f;
+      --stage-w: 1600;
+      --stage-h: 900;
+      --ease: cubic-bezier(.2, .8, .2, 1);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; }
+    button, video { font: inherit; }
+
+    body {
+      overflow: hidden;
+      background: #030911;
+      color: var(--ink);
+      font-family: Inter, "SF Pro Display", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #app {
+      position: fixed;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(circle at 18% 15%, rgba(22, 136, 248, .14), transparent 32%),
+        radial-gradient(circle at 82% 85%, rgba(82, 168, 255, .08), transparent 30%),
+        #030911;
+    }
+
+    #stage {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: calc(var(--stage-w) * 1px);
+      height: calc(var(--stage-h) * 1px);
+      overflow: hidden;
+      transform: translate(-50%, -50%) scale(var(--stage-scale, 1));
+      transform-origin: center;
+      border: 1px solid rgba(255, 255, 255, .08);
+      border-radius: 22px;
+      background:
+        linear-gradient(rgba(128, 176, 222, .04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(128, 176, 222, .04) 1px, transparent 1px),
+        radial-gradient(circle at 78% 18%, rgba(22, 136, 248, .12), transparent 30%),
+        linear-gradient(145deg, #07111f 0%, #0a1727 54%, #07121f 100%);
+      background-size: 40px 40px, 40px 40px, auto, auto;
+      box-shadow: 0 36px 120px rgba(0, 0, 0, .56);
+    }
+
+    #stage::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 20;
+      pointer-events: none;
+      box-shadow: inset 0 0 140px rgba(0, 0, 0, .25);
+    }
+
+    body.present #stage { border-radius: 0; border-color: transparent; box-shadow: none; }
+
+    .scene {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      padding: 68px 82px 70px;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity .42s ease, visibility .42s step-end;
+    }
+
+    .scene.active {
+      z-index: 2;
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+      transition: opacity .42s ease, visibility 0s;
+    }
+
+    .scene-no {
+      position: absolute;
+      top: 70px;
+      right: 82px;
+      color: var(--faint);
+      font: 600 14px/1 ui-monospace, "SFMono-Regular", Menlo, monospace;
+      letter-spacing: .16em;
+    }
+
+    .kicker {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--blue);
+      font: 650 15px/1.2 ui-monospace, "SFMono-Regular", Menlo, monospace;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+
+    .kicker::before {
+      content: "";
+      width: 34px;
+      height: 2px;
+      background: var(--blue);
+      box-shadow: 0 0 18px rgba(82, 168, 255, .7);
+    }
+
+    .display {
+      margin: 24px 0 0;
+      max-width: 1180px;
+      font-size: 76px;
+      font-weight: 720;
+      line-height: 1.08;
+      letter-spacing: -.045em;
+    }
+
+    .display em { color: var(--blue); font-style: normal; }
+
+    .lead {
+      max-width: 900px;
+      margin-top: 24px;
+      color: var(--muted);
+      font-size: 23px;
+      line-height: 1.7;
+    }
+
+    .mono {
+      font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+    }
+
+    /* Hero */
+    .hero-brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: .01em;
+    }
+
+    .brand-mark {
+      position: relative;
+      width: 40px;
+      height: 40px;
+      border: 1px solid rgba(82, 168, 255, .55);
+      border-radius: 50%;
+    }
+
+    .brand-mark::before,
+    .brand-mark::after {
+      content: "";
+      position: absolute;
+      border-radius: 50%;
+    }
+
+    .brand-mark::before {
+      inset: 9px;
+      border: 2px solid var(--blue);
+      box-shadow: 0 0 18px rgba(82, 168, 255, .55);
+    }
+
+    .brand-mark::after {
+      width: 9px;
+      height: 9px;
+      right: -2px;
+      bottom: 4px;
+      background: var(--blue);
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.02fr .98fr;
+      gap: 74px;
+      align-items: center;
+      height: calc(100% - 54px);
+    }
+
+    .hero-copy .display { font-size: 82px; }
+
+    .hero-proof {
+      display: flex;
+      gap: 28px;
+      margin-top: 46px;
+      color: var(--muted);
+      font-size: 16px;
+    }
+
+    .hero-proof span {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+
+    .hero-proof i {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--blue);
+      box-shadow: 0 0 12px rgba(82, 168, 255, .8);
+    }
+
+    .paper-visual {
+      position: relative;
+      height: 620px;
+      perspective: 1200px;
+    }
+
+    .paper-sheet {
+      position: absolute;
+      width: 520px;
+      height: 650px;
+      top: 2px;
+      right: 54px;
+      overflow: hidden;
+      color: var(--paper-ink);
+      border-radius: 7px;
+      background: var(--paper);
+      box-shadow: 0 32px 80px rgba(0, 0, 0, .42);
+      transform: rotateY(-8deg) rotateZ(2deg);
+    }
+
+    .paper-sheet::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(110deg, transparent 0 65%, rgba(13, 48, 79, .07));
+    }
+
+    .paper-head { padding: 40px 42px 20px; text-align: center; }
+    .paper-title { font: 750 21px/1.3 Georgia, serif; }
+    .paper-authors { margin-top: 10px; color: #64788e; font-size: 10px; }
+    .paper-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; padding: 0 38px; }
+    .paper-col span { display: block; height: 5px; margin: 0 0 8px; border-radius: 2px; background: #dbe5ee; }
+    .paper-col span:nth-child(3n) { width: 78%; }
+
+    .paper-figure {
+      position: absolute;
+      left: 44px;
+      right: 44px;
+      bottom: 74px;
+      height: 205px;
+      padding: 22px 24px;
+      border: 2px solid var(--blue-strong);
+      background: #edf7ff;
+    }
+
+    .paper-figure::after {
+      content: "Figure 2 · System overview";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: -28px;
+      color: #64788e;
+      font: 10px/1.4 Georgia, serif;
+    }
+
+    .figure-flow { display: flex; align-items: center; justify-content: center; height: 100%; gap: 14px; }
+    .figure-flow b { display: grid; place-items: center; width: 95px; height: 62px; border-radius: 5px; background: #fff; border: 1px solid #a6cce9; font: 700 11px/1.2 system-ui; }
+    .figure-flow i { width: 30px; height: 2px; background: var(--blue-strong); position: relative; }
+    .figure-flow i::after { content: ""; position: absolute; right: -1px; top: -4px; border-left: 7px solid var(--blue-strong); border-top: 5px solid transparent; border-bottom: 5px solid transparent; }
+
+    .scan-line {
+      position: absolute;
+      z-index: 3;
+      left: 24px;
+      right: 10px;
+      top: 110px;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--blue), transparent);
+      filter: drop-shadow(0 0 10px var(--blue));
+      animation: scan 3.3s ease-in-out infinite;
+    }
+
+    .evidence-tag {
+      position: absolute;
+      z-index: 4;
+      right: -2px;
+      bottom: 102px;
+      padding: 13px 17px;
+      border: 1px solid rgba(82, 168, 255, .45);
+      border-radius: 9px;
+      color: var(--blue);
+      background: rgba(7, 17, 31, .92);
+      box-shadow: 0 16px 50px rgba(0, 0, 0, .35);
+      font: 650 13px/1.2 ui-monospace, monospace;
+      letter-spacing: .08em;
+    }
+
+    /* Transformation */
+    .transform-layout {
+      display: grid;
+      grid-template-columns: 1fr 110px 1fr;
+      gap: 28px;
+      align-items: center;
+      height: 620px;
+      margin-top: 28px;
+    }
+
+    .artifact {
+      position: relative;
+      height: 540px;
+      overflow: hidden;
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .artifact-label {
+      position: absolute;
+      top: 24px;
+      left: 0;
+      color: var(--faint);
+      font: 600 13px/1 ui-monospace, monospace;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+    }
+
+    .pdf-density {
+      position: absolute;
+      inset: 82px 18px 38px 0;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 19px;
+      padding: 31px;
+      background: #eef3f7;
+      box-shadow: 0 24px 50px rgba(0, 0, 0, .25);
+      transform: rotate(-1.2deg);
+    }
+
+    .density-col span { display: block; height: 5px; margin-bottom: 8px; background: #cdd8e2; }
+    .density-col span:nth-child(4n) { width: 72%; }
+
+    .brief-preview {
+      position: absolute;
+      inset: 82px 0 38px 18px;
+      overflow: hidden;
+      padding: 34px 42px;
+      color: var(--paper-ink);
+      background: #fbfdff;
+      box-shadow: 0 24px 50px rgba(0, 0, 0, .25);
+      transform: rotate(1deg);
+    }
+
+    .brief-preview .tiny { color: var(--blue-strong); font: 700 10px/1 ui-monospace, monospace; letter-spacing: .12em; }
+    .brief-preview h3 { max-width: 480px; margin: 15px 0 16px; font-size: 30px; line-height: 1.24; letter-spacing: -.02em; }
+    .brief-preview p { color: #64778c; font-size: 14px; line-height: 1.75; }
+    .result-figure { height: 190px; margin-top: 25px; padding: 22px; background: #edf7ff; border: 1px solid #c3dff3; }
+    .result-bars { display: flex; align-items: end; gap: 20px; height: 116px; padding: 0 20px; border-bottom: 1px solid #afc8db; }
+    .result-bars i { width: 48px; background: #b6d4ea; }
+    .result-bars i:nth-child(1) { height: 44%; }
+    .result-bars i:nth-child(2) { height: 61%; }
+    .result-bars i:nth-child(3) { height: 77%; background: var(--blue-strong); }
+    .result-bars i:nth-child(4) { height: 53%; }
+    .result-caption { margin-top: 13px; color: #49657e; font-size: 11px; }
+
+    .transform-arrow {
+      position: relative;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--blue), transparent);
+      box-shadow: 0 0 18px rgba(82, 168, 255, .65);
+    }
+
+    .transform-arrow::after {
+      content: "";
+      position: absolute;
+      right: 3px;
+      top: -7px;
+      border-left: 12px solid var(--blue);
+      border-top: 8px solid transparent;
+      border-bottom: 8px solid transparent;
+    }
+
+    /* Workflow */
+    .workflow {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 0;
+      margin-top: 112px;
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .step {
+      position: relative;
+      min-height: 300px;
+      padding: 42px 30px 35px;
+      border-right: 1px solid var(--line);
+    }
+
+    .step:last-child { border-right: 0; }
+    .step-no { color: var(--blue); font: 650 13px/1 ui-monospace, monospace; }
+    .step h3 { margin: 82px 0 12px; font-size: 24px; }
+    .step p { color: var(--muted); font-size: 16px; line-height: 1.65; }
+
+    .step::before {
+      content: "";
+      position: absolute;
+      top: -5px;
+      left: 29px;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--blue);
+      box-shadow: 0 0 18px rgba(82, 168, 255, .8);
+    }
+
+    .workflow-note {
+      margin-top: 42px;
+      color: var(--muted);
+      font-size: 20px;
+    }
+
+    .workflow-note strong { color: var(--ink); }
+
+    /* Video */
+    .video-scene { padding-top: 52px; }
+    .video-head { display: flex; align-items: end; justify-content: space-between; margin-bottom: 24px; }
+    .video-head .display { margin-top: 16px; font-size: 52px; }
+    .live-state { display: flex; align-items: center; gap: 9px; color: var(--muted); font: 600 13px/1 ui-monospace, monospace; letter-spacing: .1em; }
+    .live-state::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--blue); box-shadow: 0 0 16px rgba(82, 168, 255, .8); animation: breathe 1.8s ease-in-out infinite; }
+
+    .video-frame {
+      position: relative;
+      height: 700px;
+      overflow: hidden;
+      border: 1px solid rgba(82, 168, 255, .28);
+      border-radius: 16px;
+      background: #02060b;
+      box-shadow: 0 30px 80px rgba(0, 0, 0, .48), inset 0 0 0 1px rgba(255, 255, 255, .025);
+    }
+
+    .video-frame::before {
+      content: "REAL WORKFLOW";
+      position: absolute;
+      z-index: 4;
+      top: 18px;
+      left: 20px;
+      padding: 8px 10px;
+      color: var(--blue);
+      border: 1px solid rgba(82, 168, 255, .3);
+      border-radius: 6px;
+      background: rgba(4, 12, 21, .78);
+      font: 650 11px/1 ui-monospace, monospace;
+      letter-spacing: .13em;
+      backdrop-filter: blur(10px);
+    }
+
+    #operationVideo {
+      display: none;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      background: #02060b;
+    }
+
+    .video-frame.has-video #operationVideo { display: block; }
+    .video-frame.has-video .video-placeholder { display: none; }
+
+    .video-placeholder {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 70px;
+      text-align: center;
+      background:
+        linear-gradient(rgba(82, 168, 255, .05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(82, 168, 255, .05) 1px, transparent 1px),
+        radial-gradient(circle at center, rgba(22, 136, 248, .12), transparent 48%);
+      background-size: 34px 34px, 34px 34px, auto;
+    }
+
+    .drop-icon {
+      width: 78px;
+      height: 78px;
+      margin: 0 auto 28px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(82, 168, 255, .35);
+      border-radius: 50%;
+      color: var(--blue);
+      background: var(--blue-soft);
+      font-size: 28px;
+      box-shadow: 0 0 44px rgba(82, 168, 255, .13);
+    }
+
+    .video-placeholder h3 { margin: 0; font-size: 34px; letter-spacing: -.02em; }
+    .video-placeholder p { max-width: 770px; margin: 16px auto 0; color: var(--muted); font-size: 19px; line-height: 1.7; }
+    .video-file { display: inline-block; margin-top: 24px; padding: 12px 18px; border-radius: 7px; color: var(--blue); background: rgba(82, 168, 255, .09); border: 1px solid rgba(82, 168, 255, .26); font: 600 15px/1 ui-monospace, monospace; }
+    .video-spec { margin-top: 18px; color: var(--faint); font: 13px/1.4 ui-monospace, monospace; }
+
+    /* Output */
+    .output-layout {
+      display: grid;
+      grid-template-columns: 1.18fr .82fr;
+      gap: 68px;
+      align-items: center;
+      height: 560px;
+      margin-top: 10px;
+    }
+
+    .scene[data-id="output"] .display { font-size: 60px; }
+
+    .browser-mock {
+      overflow: hidden;
+      height: 510px;
+      border: 1px solid rgba(168, 201, 232, .2);
+      border-radius: 12px;
+      background: #f7fbff;
+      box-shadow: 0 28px 70px rgba(0, 0, 0, .38);
+      transform: perspective(1200px) rotateY(3deg);
+    }
+
+    .browser-bar { display: flex; align-items: center; gap: 8px; height: 42px; padding: 0 16px; background: #112338; }
+    .browser-bar i { width: 9px; height: 9px; border-radius: 50%; background: #3f5870; }
+    .browser-url { width: 380px; margin-left: 10px; padding: 7px 13px; border-radius: 5px; color: #7790a7; background: #081522; font: 10px/1 ui-monospace, monospace; }
+
+    .report-mock { height: 468px; overflow: hidden; color: var(--paper-ink); background: #f7fbff; }
+    .report-inner { width: 78%; margin: 0 auto; padding: 34px 0 80px; animation: reportScroll 9s ease-in-out infinite alternate; }
+    .report-label { color: var(--blue-strong); font: 700 9px/1 ui-monospace, monospace; letter-spacing: .14em; }
+    .report-title { max-width: 680px; margin-top: 13px; font-size: 27px; line-height: 1.3; }
+    .report-tldr { margin-top: 18px; padding: 16px 18px; border-left: 3px solid var(--blue-strong); background: #e9f5ff; color: #506b82; font-size: 12px; line-height: 1.7; }
+    .report-section { margin-top: 26px; font-size: 18px; }
+    .report-copy { margin-top: 10px; color: #667b8e; font: 12px/1.8 Georgia, serif; }
+    .report-image { height: 180px; margin-top: 17px; padding: 24px; border: 1px solid #c9dce9; background: #fff; }
+    .report-diagram { display: flex; align-items: center; justify-content: center; gap: 13px; height: 100%; }
+    .report-diagram b { display: grid; place-items: center; width: 112px; height: 60px; border-radius: 4px; border: 1px solid #aacce5; background: #edf7ff; font-size: 10px; }
+    .report-diagram i { width: 28px; height: 2px; background: var(--blue-strong); }
+
+    .output-copy h3 { margin: 0; font-size: 44px; line-height: 1.25; letter-spacing: -.03em; }
+    .output-copy > p { margin: 20px 0 0; color: var(--muted); font-size: 20px; line-height: 1.65; }
+    .file-list { margin-top: 42px; border-top: 1px solid var(--line); }
+    .file-row { display: grid; grid-template-columns: 190px 1fr; gap: 18px; padding: 18px 0; border-bottom: 1px solid var(--line); }
+    .file-row code { color: var(--blue); font: 600 15px/1.4 ui-monospace, monospace; }
+    .file-row span { color: var(--muted); font-size: 15px; }
+
+    /* Proof */
+    .proof-list { margin-top: 74px; border-top: 1px solid var(--line); }
+    .proof-row { display: grid; grid-template-columns: 190px 1fr 440px; align-items: center; min-height: 148px; border-bottom: 1px solid var(--line); }
+    .proof-index { color: var(--blue); font: 650 15px/1 ui-monospace, monospace; }
+    .proof-row h3 { margin: 0; font-size: 31px; letter-spacing: -.02em; }
+    .proof-row p { margin: 0; color: var(--muted); font-size: 18px; line-height: 1.6; }
+    .proof-foot { display: flex; gap: 46px; margin-top: 42px; color: var(--faint); font: 600 13px/1.4 ui-monospace, monospace; letter-spacing: .07em; }
+    .proof-foot b { color: var(--ink); font-size: 22px; margin-right: 8px; }
+
+    /* Outro */
+    .outro-scene { display: grid; place-items: center; text-align: center; }
+    .outro-mark { margin: 0 auto 30px; transform: scale(1.4); }
+    .outro-scene .display { max-width: 1040px; margin-inline: auto; }
+    .outro-url { display: inline-flex; align-items: center; gap: 13px; margin-top: 44px; padding: 15px 22px; border: 1px solid rgba(82, 168, 255, .35); border-radius: 8px; color: var(--blue); background: rgba(82, 168, 255, .08); font: 600 18px/1 ui-monospace, monospace; }
+    .outro-note { margin-top: 28px; color: var(--muted); font-size: 18px; }
+    .pulse-ring { position: absolute; width: 540px; height: 540px; border: 1px solid rgba(82, 168, 255, .12); border-radius: 50%; animation: ring 4s ease-out infinite; }
+    .pulse-ring.r2 { animation-delay: 1.35s; }
+    .pulse-ring.r3 { animation-delay: 2.7s; }
+
+    /* Entrance and ambient motion */
+    [data-reveal] { opacity: 0; }
+    .scene.active [data-reveal] { animation: reveal .8s var(--ease) var(--delay, 0s) both; }
+    .scene.active [data-reveal="left"] { animation-name: revealLeft; }
+    .scene.active [data-reveal="scale"] { animation-name: revealScale; }
+
+    @keyframes reveal { from { opacity: 0; transform: translateY(26px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes revealLeft { from { opacity: 0; transform: translateX(-34px); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes revealScale { from { opacity: 0; transform: scale(.95); } to { opacity: 1; transform: scale(1); } }
+    @keyframes scan { 0%, 100% { transform: translateY(0); opacity: .25; } 50% { transform: translateY(440px); opacity: 1; } }
+    @keyframes breathe { 50% { opacity: .35; transform: scale(.85); } }
+    @keyframes reportScroll { from { transform: translateY(0); } to { transform: translateY(-180px); } }
+    @keyframes ring { 0% { transform: scale(.65); opacity: 0; } 25% { opacity: .65; } 100% { transform: scale(1.25); opacity: 0; } }
+
+    /* Presentation controls */
+    #tip {
+      position: fixed;
+      z-index: 50;
+      top: 18px;
+      right: 20px;
+      padding: 9px 12px;
+      border: 1px solid rgba(255, 255, 255, .1);
+      border-radius: 7px;
+      color: #7f94aa;
+      background: rgba(3, 9, 17, .78);
+      font: 12px/1 ui-monospace, monospace;
+      backdrop-filter: blur(12px);
+      transition: opacity .3s ease;
+    }
+
+    #hud {
+      position: fixed;
+      z-index: 50;
+      left: 50%;
+      bottom: 18px;
+      width: min(940px, calc(100vw - 32px));
+      padding: 11px 13px;
+      border: 1px solid rgba(255, 255, 255, .1);
+      border-radius: 12px;
+      background: rgba(3, 9, 17, .86);
+      box-shadow: 0 18px 50px rgba(0, 0, 0, .35);
+      backdrop-filter: blur(18px);
+      transform: translate(-50%, 0);
+      transition: opacity .28s ease, transform .28s ease;
+    }
+
+    #hud.hidden { opacity: 0; pointer-events: none; transform: translate(-50%, 22px); }
+    #progress { height: 3px; overflow: hidden; border-radius: 3px; background: rgba(255, 255, 255, .12); }
+    #progressFill { width: 0; height: 100%; background: var(--blue); box-shadow: 0 0 14px rgba(82, 168, 255, .6); }
+    .controls { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+    .control { min-width: 38px; height: 34px; padding: 0 11px; border: 1px solid rgba(255, 255, 255, .1); border-radius: 7px; color: #b7c8d9; background: rgba(255, 255, 255, .055); cursor: pointer; }
+    .control:hover { color: #fff; border-color: rgba(82, 168, 255, .4); background: rgba(82, 168, 255, .12); }
+    .dots { display: flex; gap: 8px; margin-left: 12px; }
+    .dot-btn { width: 8px; height: 8px; padding: 0; border: 0; border-radius: 50%; background: #3a4d60; cursor: pointer; transition: width .25s ease, border-radius .25s ease, background .25s ease; }
+    .dot-btn.active { width: 28px; border-radius: 6px; background: var(--blue); }
+    #sceneInfo { margin-left: auto; color: #6f8398; font: 12px/1 ui-monospace, monospace; }
+    body.present #hud, body.present #tip { display: none; }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+    }
+  </style>
+</head>
+
+<body>
+  <main id="app">
+    <div id="stage" aria-live="polite">
+      <section class="scene active" data-id="hero" data-duration="8">
+        <span class="scene-no">01 / 07</span>
+        <div class="hero-brand" data-reveal style="--delay:.1s">
+          <span class="brand-mark" aria-hidden="true"></span>
+          <span>PaperPulse</span>
+        </div>
+
+        <div class="hero-grid">
+          <div class="hero-copy">
+            <div class="kicker" data-reveal style="--delay:.25s">Evidence-first paper reading</div>
+            <h1 class="display" data-reveal style="--delay:.42s">论文摘要不难。<br>难的是，把<em>证据</em><br>一起带回来。</h1>
+            <p class="lead" data-reveal style="--delay:.62s">把本地论文 PDF 转换成有主线、有原文图表、有研究判断的中文简报。</p>
+            <div class="hero-proof" data-reveal style="--delay:.82s">
+              <span><i></i>原文 Figure / Table</span>
+              <span><i></i>中文深度解读</span>
+              <span><i></i>可分享 HTML</span>
+            </div>
+          </div>
+
+          <div class="paper-visual" data-reveal="scale" style="--delay:.35s" aria-hidden="true">
+            <div class="scan-line"></div>
+            <div class="paper-sheet">
+              <div class="paper-head">
+                <div class="paper-title">A-MEM: Agentic Memory<br>for LLM Agents</div>
+                <div class="paper-authors">Wujiang Xu · Zujie Liang · Kai Mei · et al.</div>
+              </div>
+              <div class="paper-cols">
+                <div class="paper-col"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+                <div class="paper-col"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+              </div>
+              <div class="paper-figure">
+                <div class="figure-flow"><b>Memory</b><i></i><b>Linking</b><i></i><b>Evolution</b></div>
+              </div>
+            </div>
+            <div class="evidence-tag">ORIGINAL EVIDENCE FOUND</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="scene" data-id="transform" data-duration="8">
+        <span class="scene-no">02 / 07</span>
+        <div class="kicker" data-reveal>The reading gap</div>
+        <h2 class="display" data-reveal style="--delay:.15s">从密集 PDF，<br>到<em>能读完、能核验</em>的解读。</h2>
+
+        <div class="transform-layout">
+          <div class="artifact" data-reveal="left" style="--delay:.32s">
+            <span class="artifact-label">Before · Paper PDF</span>
+            <div class="pdf-density" aria-hidden="true">
+              <div class="density-col"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+              <div class="density-col"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+            </div>
+          </div>
+
+          <div class="transform-arrow" data-reveal="scale" style="--delay:.7s" aria-hidden="true"></div>
+
+          <div class="artifact" data-reveal style="--delay:.52s">
+            <span class="artifact-label">After · PaperPulse brief</span>
+            <div class="brief-preview">
+              <div class="tiny">PAPER NOTE · TL;DR</div>
+              <h3>别再把 Agent 的记忆当数据库了</h3>
+              <p>A-MEM 让记忆不只被存储和检索，还能主动建立联系、更新旧经验。</p>
+              <div class="result-figure">
+                <div class="result-bars"><i></i><i></i><i></i><i></i></div>
+                <div class="result-caption">主实验结果 · 原文图表证据</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="scene" data-id="workflow" data-duration="9">
+        <span class="scene-no">03 / 07</span>
+        <div class="kicker" data-reveal>One skill · complete workflow</div>
+        <h2 class="display" data-reveal style="--delay:.15s">一句话启动，<br>一条链路交付。</h2>
+
+        <div class="workflow">
+          <div class="step" data-reveal style="--delay:.35s"><span class="step-no">01</span><h3>读取 PDF</h3><p>提取论文正文，保留标题与链接信息。</p></div>
+          <div class="step" data-reveal style="--delay:.48s"><span class="step-no">02</span><h3>定位证据</h3><p>识别 Figure、Table 与邻近上下文。</p></div>
+          <div class="step" data-reveal style="--delay:.61s"><span class="step-no">03</span><h3>选择关键图</h3><p>围绕方法、结果和限制筛选证据。</p></div>
+          <div class="step" data-reveal style="--delay:.74s"><span class="step-no">04</span><h3>写成简报</h3><p>组织中文叙事，并给出研究判断。</p></div>
+          <div class="step" data-reveal style="--delay:.87s"><span class="step-no">05</span><h3>渲染与验收</h3><p>生成 HTML，检查元数据、图片与版式。</p></div>
+        </div>
+
+        <p class="workflow-note" data-reveal style="--delay:1.05s">脚本负责稳定提取，<strong>Codex 负责真正需要判断的部分。</strong></p>
+      </section>
+
+      <section class="scene video-scene" data-id="operation" data-duration="12">
+        <span class="scene-no">04 / 07</span>
+        <div class="video-head">
+          <div>
+            <div class="kicker" data-reveal>Real operation</div>
+            <h2 class="display" data-reveal style="--delay:.12s">现在，看它真实跑一次。</h2>
+          </div>
+          <div class="live-state" data-reveal style="--delay:.35s">LIVE WORKFLOW</div>
+        </div>
+
+        <div class="video-frame" id="videoFrame" data-reveal="scale" style="--delay:.28s">
+          <!-- 唯一的视频入口：把同目录录屏命名为 paperpulse-operation.mp4 即可 -->
+          <video id="operationVideo" src="paperpulse-operation.mp4" muted playsinline preload="metadata"></video>
+
+          <div class="video-placeholder" id="videoPlaceholder">
+            <div>
+              <div class="drop-icon">▶</div>
+              <h3>真实操作视频插入位</h3>
+              <p>录制一次完整流程：把 PDF 交给 PaperPulse，展示正文与图表提取，再打开最终 report.html。视频加载后，本页会自动按真实时长播放并切到下一幕。</p>
+              <span class="video-file">paperpulse-operation.mp4</span>
+              <div class="video-spec">1920×1080 · H.264 MP4 · 建议 20–45 秒</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="scene" data-id="output" data-duration="9">
+        <span class="scene-no">05 / 07</span>
+        <div class="kicker" data-reveal>From evidence to deliverable</div>
+        <h2 class="display" data-reveal style="--delay:.15s">不是一段回答。<br>是一份<em>可继续使用</em>的成果。</h2>
+
+        <div class="output-layout">
+          <div class="browser-mock" data-reveal="scale" style="--delay:.32s" aria-hidden="true">
+            <div class="browser-bar"><i></i><i></i><i></i><div class="browser-url">paperpulse / a-mem / report.html</div></div>
+            <div class="report-mock">
+              <div class="report-inner">
+                <div class="report-label">PAPER NOTE</div>
+                <h3 class="report-title">别再把 Agent 的记忆当数据库了：A-MEM 让它学会整理、联想和更新经验</h3>
+                <div class="report-tldr">A-MEM 把交互记录写成带上下文、关键词和链接的笔记，再让新记忆反过来更新旧记忆。</div>
+                <h4 class="report-section">Agent 不是缺记性，是缺“会整理”的记忆</h4>
+                <p class="report-copy">论文不满足于把记忆做成更大的向量库，而是让记忆结构随着经验主动生长。</p>
+                <div class="report-image"><div class="report-diagram"><b>Interaction</b><i></i><b>Memory note</b><i></i><b>Evolution</b></div></div>
+                <h4 class="report-section">结果真正说明了什么</h4>
+              </div>
+            </div>
+          </div>
+
+          <div class="output-copy" data-reveal style="--delay:.52s">
+            <h3>一份简报，<br>五种可追溯产物。</h3>
+            <p>原始依据、候选证据和最终成品彼此分离，方便核验、编辑与分享。</p>
+            <div class="file-list">
+              <div class="file-row"><code>source_text.md</code><span>清理后的论文正文</span></div>
+              <div class="file-row"><code>captions.json</code><span>图表标题与上下文</span></div>
+              <div class="file-row"><code>images/</code><span>原文 Figure / Table</span></div>
+              <div class="file-row"><code>report.md</code><span>可继续编辑的中文简报</span></div>
+              <div class="file-row"><code>report.html</code><span>可直接分享的阅读页面</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="scene" data-id="proof" data-duration="9">
+        <span class="scene-no">06 / 07</span>
+        <div class="kicker" data-reveal>Why it is different</div>
+        <h2 class="display" data-reveal style="--delay:.15s">更快，但不以<em>牺牲可信度</em>为代价。</h2>
+
+        <div class="proof-list">
+          <div class="proof-row" data-reveal style="--delay:.34s"><span class="proof-index">01 / EVIDENCE</span><h3>关键结论带着原文图表</h3><p>方法图、结果表和消融实验来自论文 PDF，而不是重新生成的示意图。</p></div>
+          <div class="proof-row" data-reveal style="--delay:.5s"><span class="proof-index">02 / TRACE</span><h3>每一步都有依据可回查</h3><p>正文、图表上下文与最终报告分别保存，重要判断可以回到来源。</p></div>
+          <div class="proof-row" data-reveal style="--delay:.66s"><span class="proof-index">03 / REVIEW</span><h3>自动化之后还有验收</h3><p>检查裁剪完整性、元数据、图片引用和最终版式，不把“生成完成”当成“交付完成”。</p></div>
+        </div>
+
+        <div class="proof-foot" data-reveal style="--delay:.9s"><span><b>13</b>份公开样例</span><span><b>1</b>个本地 PDF 输入</span><span><b>5</b>类可追溯产物</span></div>
+      </section>
+
+      <section class="scene outro-scene" data-id="outro" data-duration="8">
+        <span class="pulse-ring" aria-hidden="true"></span><span class="pulse-ring r2" aria-hidden="true"></span><span class="pulse-ring r3" aria-hidden="true"></span>
+        <span class="scene-no">07 / 07</span>
+        <div>
+          <div class="brand-mark outro-mark" data-reveal="scale" aria-hidden="true"></div>
+          <div class="kicker" data-reveal style="--delay:.18s;justify-content:center">PaperPulse</div>
+          <h2 class="display" data-reveal style="--delay:.34s">让 AI 读论文，<br>也把<em>证据</em>一起带回来。</h2>
+          <div class="outro-url" data-reveal style="--delay:.55s">github.com/w1ndz321/paperpulse-skill</div>
+          <p class="outro-note" data-reveal style="--delay:.7s">Open source · Codex Skill · Screenshot-backed paper briefs</p>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <div id="tip">Space 播放/暂停 · ← → 切幕 · R 重播 · F 全屏 · H 控制栏</div>
+
+  <nav id="hud" aria-label="演示控制">
+    <div id="progress"><div id="progressFill"></div></div>
+    <div class="controls">
+      <button class="control" id="prevButton" type="button" aria-label="上一幕">←</button>
+      <button class="control" id="playButton" type="button" aria-label="暂停">Ⅱ</button>
+      <button class="control" id="nextButton" type="button" aria-label="下一幕">→</button>
+      <button class="control" id="replayButton" type="button" aria-label="重播当前幕">↻</button>
+      <div class="dots" id="sceneDots"></div>
+      <span id="sceneInfo"></span>
+    </div>
+  </nav>
+
+  <script>
+    (function () {
+      "use strict";
+
+      var STAGE_WIDTH = 1600;
+      var STAGE_HEIGHT = 900;
+      var stage = document.getElementById("stage");
+      var scenes = Array.prototype.slice.call(document.querySelectorAll(".scene"));
+      var video = document.getElementById("operationVideo");
+      var videoFrame = document.getElementById("videoFrame");
+      var progressFill = document.getElementById("progressFill");
+      var playButton = document.getElementById("playButton");
+      var prevButton = document.getElementById("prevButton");
+      var nextButton = document.getElementById("nextButton");
+      var replayButton = document.getElementById("replayButton");
+      var sceneDots = document.getElementById("sceneDots");
+      var sceneInfo = document.getElementById("sceneInfo");
+      var hud = document.getElementById("hud");
+      var tip = document.getElementById("tip");
+      var params = new URLSearchParams(window.location.search);
+
+      var index = 0;
+      var playing = true;
+      var elapsed = 0;
+      var lastFrame = performance.now();
+      var controlTimer = null;
+
+      if (params.get("present") === "1") document.body.classList.add("present");
+
+      function fitStage() {
+        var padding = document.body.classList.contains("present") ? 0 : 42;
+        var scale = Math.min(
+          (window.innerWidth - padding) / STAGE_WIDTH,
+          (window.innerHeight - padding) / STAGE_HEIGHT
+        );
+        stage.style.setProperty("--stage-scale", Math.max(scale, .1));
+      }
+
+      function activeScene() { return scenes[index]; }
+
+      function activeVideo() {
+        var current = activeScene().querySelector("video");
+        return current && videoFrame.classList.contains("has-video") ? current : null;
+      }
+
+      function durationOf(scene) {
+        var currentVideo = scene.querySelector("video");
+        if (currentVideo && videoFrame.classList.contains("has-video") && isFinite(currentVideo.duration) && currentVideo.duration > 0) {
+          return currentVideo.duration * 1000;
+        }
+        return Number(scene.dataset.duration || 8) * 1000;
+      }
+
+      function updatePlayButton() {
+        playButton.textContent = playing ? "Ⅱ" : "▶";
+        playButton.setAttribute("aria-label", playing ? "暂停" : "播放");
+      }
+
+      function renderDots() {
+        sceneDots.innerHTML = "";
+        scenes.forEach(function (scene, sceneIndex) {
+          var button = document.createElement("button");
+          button.type = "button";
+          button.className = "dot-btn" + (sceneIndex === index ? " active" : "");
+          button.setAttribute("aria-label", "跳转到第 " + (sceneIndex + 1) + " 幕");
+          button.addEventListener("click", function () { showScene(sceneIndex); });
+          sceneDots.appendChild(button);
+        });
+      }
+
+      function updateSceneInfo() {
+        sceneInfo.textContent = String(index + 1).padStart(2, "0") + " / " + String(scenes.length).padStart(2, "0") + " · " + activeScene().dataset.id;
+      }
+
+      function resetSceneAnimation(scene) {
+        scene.classList.remove("active");
+        void scene.offsetWidth;
+        scene.classList.add("active");
+      }
+
+      function pauseAllVideos() {
+        scenes.forEach(function (scene) {
+          var sceneVideo = scene.querySelector("video");
+          if (sceneVideo) sceneVideo.pause();
+        });
+      }
+
+      function playCurrentVideo() {
+        var current = activeVideo();
+        if (!current || !playing) return;
+        var promise = current.play();
+        if (promise && promise.catch) {
+          promise.catch(function () {
+            videoFrame.classList.remove("has-video");
+          });
+        }
+      }
+
+      function showScene(nextIndex) {
+        if (nextIndex < 0 || nextIndex >= scenes.length) return;
+        pauseAllVideos();
+        scenes.forEach(function (scene) { scene.classList.remove("active"); });
+        index = nextIndex;
+        elapsed = 0;
+        resetSceneAnimation(activeScene());
+
+        var current = activeVideo();
+        if (current) current.currentTime = 0;
+        playCurrentVideo();
+        renderDots();
+        updateSceneInfo();
+        progressFill.style.width = "0%";
+
+        try { history.replaceState(null, "", "#" + activeScene().dataset.id); } catch (error) {}
+      }
+
+      function nextScene() {
+        if (index < scenes.length - 1) showScene(index + 1);
+        else {
+          playing = false;
+          updatePlayButton();
+          progressFill.style.width = "100%";
+        }
+      }
+
+      function previousScene() { if (index > 0) showScene(index - 1); }
+      function replayScene() { showScene(index); }
+
+      function togglePlayback() {
+        playing = !playing;
+        var current = activeVideo();
+        if (current) {
+          if (playing) playCurrentVideo();
+          else current.pause();
+        }
+        updatePlayButton();
+      }
+
+      function sceneIndexFromHash() {
+        var id = decodeURIComponent(window.location.hash.replace(/^#/, ""));
+        for (var i = 0; i < scenes.length; i += 1) {
+          if (scenes[i].dataset.id === id) return i;
+        }
+        return -1;
+      }
+
+      function loop(now) {
+        var delta = now - lastFrame;
+        lastFrame = now;
+
+        if (playing) {
+          var current = activeVideo();
+          var progress;
+
+          if (current) {
+            progress = current.duration ? current.currentTime / current.duration : 0;
+            if (current.ended) nextScene();
+          } else {
+            elapsed += delta;
+            progress = elapsed / durationOf(activeScene());
+            if (progress >= 1) nextScene();
+          }
+
+          progressFill.style.width = Math.min(progress * 100, 100) + "%";
+        }
+
+        requestAnimationFrame(loop);
+      }
+
+      function revealControls() {
+        if (document.body.classList.contains("present")) return;
+        hud.classList.remove("hidden");
+        window.clearTimeout(controlTimer);
+        controlTimer = window.setTimeout(function () { hud.classList.add("hidden"); }, 3000);
+      }
+
+      function markVideoReady() {
+        videoFrame.classList.add("has-video");
+        if (activeScene().dataset.id === "operation") playCurrentVideo();
+      }
+
+      video.addEventListener("loadedmetadata", markVideoReady);
+
+      video.addEventListener("error", function () {
+        videoFrame.classList.remove("has-video");
+      });
+
+      if (video.readyState >= 1) markVideoReady();
+
+      prevButton.addEventListener("click", previousScene);
+      nextButton.addEventListener("click", nextScene);
+      replayButton.addEventListener("click", replayScene);
+      playButton.addEventListener("click", togglePlayback);
+
+      document.addEventListener("keydown", function (event) {
+        if (event.code === "Space") { event.preventDefault(); togglePlayback(); }
+        else if (event.key === "ArrowRight") nextScene();
+        else if (event.key === "ArrowLeft") previousScene();
+        else if (event.key.toLowerCase() === "r") replayScene();
+        else if (event.key.toLowerCase() === "h") hud.classList.toggle("hidden");
+        else if (event.key.toLowerCase() === "f") {
+          if (document.fullscreenElement) document.exitFullscreen();
+          else document.documentElement.requestFullscreen();
+        }
+      });
+
+      window.addEventListener("resize", fitStage);
+      window.addEventListener("mousemove", revealControls);
+      window.addEventListener("hashchange", function () {
+        var nextIndex = sceneIndexFromHash();
+        if (nextIndex >= 0 && nextIndex !== index) showScene(nextIndex);
+      });
+
+      fitStage();
+      renderDots();
+      updateSceneInfo();
+      updatePlayButton();
+
+      var initialIndex = sceneIndexFromHash();
+      showScene(initialIndex >= 0 ? initialIndex : 0);
+      window.setTimeout(function () { tip.style.opacity = "0"; }, 5000);
+      if (!document.body.classList.contains("present")) revealControls();
+      requestAnimationFrame(loop);
+    }());
+  </script>
+</body>
+</html>
